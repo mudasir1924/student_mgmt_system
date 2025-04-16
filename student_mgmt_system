@@ -1,0 +1,147 @@
+import pymysql
+
+
+class DatabaseCRUDOperations:
+    def __init__(self):
+        self.my_cursor = None
+        self.mydb = None
+
+    def create_connection(self):
+        self.mydb = pymysql.connect(
+            host="localhost",
+            user="root",
+            password="root",
+            database="student_mgmt",
+        )
+        
+        print(self.mydb, 'connected')
+        self.my_cursor = self.mydb.cursor()
+
+    def create_table(self):
+        sql_query = """
+            CREATE TABLE IF NOT EXISTS Student_data (
+                stud_id INT NOT NULL PRIMARY KEY,
+                name VARCHAR(255),
+                email VARCHAR(255),
+                contact BIGINT
+            )
+        """
+        self.my_cursor.execute(sql_query)
+        print("Table created successfully!")
+
+    def insert_data(self):
+        try:
+            stud_id = int(input("Enter Student ID: "))
+            name = input("Enter Name: ")
+            email = input("Enter Email: ")
+            contact = int(input("Enter Contact: "))
+
+            sql = "INSERT INTO Student_data (stud_id, name, email, contact) VALUES (%s, %s, %s, %s)"
+            values = (stud_id, name, email, contact)
+
+            self.my_cursor.execute(sql, values)
+            self.mydb.commit()
+            print(self.my_cursor.rowcount, "record inserted.")
+        except Exception as e:
+            print("Error inserting data:", e)
+
+    def select_data(self):
+        try:
+            stud_id = int(input("Enter student ID to fetch your data: "))
+            query = "SELECT stud_id, name, email, contact FROM Student_data WHERE stud_id = %s"
+            self.my_cursor.execute(query, (stud_id,))
+            my_result = self.my_cursor.fetchone()
+
+            if my_result:
+                print("\n--- Student Record ---")
+                print(f"stud_id: {my_result[0]}")
+                print(f"name: {my_result[1]}")
+                print(f"email: {my_result[2]}")
+                print(f"contact: {my_result[3]}\n")
+            else:
+                print("No records found.")
+        except Exception as e:
+            print("Error fetching data:", e)
+
+    def fetch_all(self):
+        try:
+            query = "SELECT * FROM Student_data"
+            self.my_cursor.execute(query)
+            my_result = self.my_cursor.fetchall()
+
+            if my_result:
+                print("\n--- Student Records ---\n")
+                for row in my_result:
+                    print("stud_id =", row[0])
+                    print("name =", row[1])
+                    print("email =", row[2])
+                    print("contact =", row[3], "\n")
+            else:
+                print("No records found.")
+        except Exception as e:
+            print("Error fetching all records:", e)
+
+    def update_data(self):
+        try:
+            stud_id = int(input("What's your student ID: "))
+            new_name = input("Enter new name: ")
+            new_email = input("Enter new email: ")
+            new_contact = int(input("Enter new contact: "))
+
+            query = "UPDATE Student_data SET name=%s, email=%s, contact=%s WHERE stud_id=%s"
+            values = (new_name, new_email, new_contact, stud_id)
+
+            self.my_cursor.execute(query, values)
+            self.mydb.commit()
+            print(self.my_cursor.rowcount, "record updated.")
+        except Exception as e:
+            print("Error updating record:", e)
+
+    def delete_data(self):
+        try:
+            stud_id = int(input("Enter student ID: "))
+            query = "DELETE FROM Student_data WHERE stud_id = %s"
+            self.my_cursor.execute(query, (stud_id,))
+            self.mydb.commit()
+            print(self.my_cursor.rowcount, "record deleted.")
+        except Exception as e:
+            print("Error deleting record:", e)
+
+
+do = DatabaseCRUDOperations()
+do.create_connection()
+
+do.create_table()
+
+while True:
+    try:
+        print('''\t\t----- Welcome to Student Management System -----
+
+                1. Add Student
+                2. Display Student Data
+                3. Modify Existing Student Record
+                4. Remove Student
+                5. Fetch All Student Records
+                6. Exit
+        ''')
+
+        choice = input("Enter your choice (1-6): ")
+
+        if choice == '1':
+            do.insert_data()
+        elif choice == '2':
+            do.select_data()
+        elif choice == '3':
+            do.update_data()
+        elif choice == '4':
+            do.delete_data()
+        elif choice == '5':
+            do.fetch_all()
+        elif choice == '6':
+            print("Exiting...")
+            break
+        else:
+            print("Invalid option!")
+
+    except Exception as e:
+        print("An error occurred:", e)
